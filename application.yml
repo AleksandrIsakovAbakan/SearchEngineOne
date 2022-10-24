@@ -1,0 +1,33 @@
+spring.datasource.url: jdbc:mysql://localhost:3306/search_engine
+spring.datasource.username: root
+spring.datasource.password: Fghtkm11_
+userAgent: SearchEngine
+pathToWebInterface: '/admin'
+
+sites:
+#  - url: https://www.lenta.ru
+#    name: 'Лента.ру'
+# - url: https://www.skillbox.ru
+#   name: 'Skillbox'
+#  - url: http://www.playback.ru/
+#   name: 'Интернет-магазин PlayBack.ru'
+  - url: https://volochek.life/
+    name: 'Вышний Волочёк портал города'
+# - url: http://radiomv.ru/
+#   name: 'Радио Милицейская Волна'
+# - url: https://ipfran.ru/
+#   name: 'ИПФ РАН'
+#  - url: https://dimonvideo.ru/
+#    name: 'DimonVideo - программы | игры | фильмы | книги'
+# - url: https://nikoartgallery.com/
+#   name: 'Галерея искусств Niko'
+# - url: https://et-cetera.ru/mobile/
+#   name: 'Театр «Et Cetera»'
+# - url: https://www.lutherancathedral.ru/
+#   name: 'Собор Петра и Павла'
+# - url: https://dombulgakova.ru/
+#   name: 'Булгаковский Дом - Новости'
+# - url: https://www.svetlovka.ru/
+#   name: 'Центральная городская молодежная библиотека им. М. А. Светлова'
+
+
