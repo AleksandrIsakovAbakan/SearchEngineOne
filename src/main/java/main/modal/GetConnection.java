@@ -1,5 +1,7 @@
 package main.modal;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 
 import java.sql.Connection;
@@ -15,6 +17,8 @@ public class GetConnection {
 
     public float bodySql;
     public final Datasource datasource;
+
+    private static final Logger log = LogManager.getLogger(GetConnection.class);
 
     public GetConnection(Datasource datasource) {
         this.datasource = datasource;
@@ -43,6 +47,7 @@ public class GetConnection {
                     ConnectionMySql.bodySql = resultSetTitleBody.getFloat("weight");
                 }
             } catch (SQLException e) {
+                log.error(e);
                 e.printStackTrace();
             }
         }

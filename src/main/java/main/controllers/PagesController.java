@@ -7,6 +7,8 @@ import main.modal.search.SearchQuery;
 import main.modal.statistics.ResultStatistics;
 import main.modal.statistics.Statistics;
 import main.modal.statistics.StatisticsTotal;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +18,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @RestController
-public class TaskController {
+public class PagesController {
     public static AtomicBoolean isIndexing = new AtomicBoolean(false);
     SearchQuery searchQuery = new SearchQuery();
     @Autowired
@@ -26,6 +28,8 @@ public class TaskController {
 
     @Value("${userAgent}")
     public String userAgent;
+
+    private static final Logger log = LogManager.getLogger(PagesController.class);
 
     @RequestMapping(value = {"/statistics", "/api/statistics"}, method = RequestMethod.GET)
     public ResultStatistics statistic() throws SQLException {
@@ -53,6 +57,7 @@ public class TaskController {
         createThreadsIndexing = new CreateThreadsIndexing();
         if (isIndexing.get()) {
             resultStartIndexing.setResult("false");
+            log.info("Индексация уже запущена");
             resultStartIndexing.setError("Индексация уже запущена");
         } else {
             resultStartIndexing.setResult("true");
@@ -67,6 +72,7 @@ public class TaskController {
         CreateThreadsIndexing createThreadsIndexing = new CreateThreadsIndexing();
         if (!isIndexing.get()) {
             resultStartIndexing.setResult("false");
+            log.info("Индексация не запущена");
             resultStartIndexing.setError("Индексация не запущена");
         } else {
             resultStartIndexing.setResult("true");
@@ -83,6 +89,7 @@ public class TaskController {
         String root = ConnectionMySql.getSiteRoot(url);
         if (root.isEmpty()) {
             resultStartIndexing.setResult("false");
+            log.info("Данная страница находится за пределами сайтов, указанных в конфигурационном файле: " + url);
             resultStartIndexing.setError("Данная страница находится за пределами сайтов, \n" +
                     "указанных в конфигурационном файле\n");
         } else {
@@ -104,14 +111,17 @@ public class TaskController {
             ResultSearchError resultSearchError = new ResultSearchError();
             resultSearchError.setResult("false");
             resultSearchError.setError("Задан пустой поисковый запрос");
+            log.info("Задан пустой поисковый запрос");
             return resultSearchError;
         } else {
             if (ConnectionMySql.getIndexing(site)) {
-                resultSearch = searchQuery.searchQueryOffset(offset, limit, query, site);
+                Object[] args5 = {offset, limit, query, site};
+                resultSearch = searchQuery.searchQueryOffset(args5);
             } else {
                 ResultSearchError resultSearchError = new ResultSearchError();
                 resultSearchError.setResult("false");
                 resultSearchError.setError("Сайт не проиндексирован");
+                log.info("Сайт не проиндексирован: " + site);
                 return resultSearchError;
             }
         }

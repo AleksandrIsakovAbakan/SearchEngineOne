@@ -3,7 +3,15 @@ spring.datasource.username: root
 spring.datasource.password: Fghtkm11_
 userAgent: SearchEngine
 pathToWebInterface: '/admin'
-
+logging:
+  level:
+#    root: info
+    main:
+      modal:
+        indexing:
+          MapRecursiveTask: debug
+        search:
+          SearchQuery: debug
 sites:
 #  - url: https://www.lenta.ru
 #    name: 'Лента.ру'

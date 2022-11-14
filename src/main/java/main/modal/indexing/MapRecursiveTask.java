@@ -2,6 +2,8 @@ package main.modal.indexing;
 
 import main.modal.ConnectionMySql;
 import main.modal.LuceneMorph;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -15,7 +17,7 @@ import java.util.*;
 import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static main.controllers.TaskController.isIndexing;
+import static main.controllers.PagesController.isIndexing;
 
 class MapRecursiveTask extends RecursiveTask<Set<MapRecursiveTask>> {
     private String urlHome;
@@ -25,6 +27,8 @@ class MapRecursiveTask extends RecursiveTask<Set<MapRecursiveTask>> {
     Set<String> link;
 
     private boolean pageAll;
+
+    private static final Logger log = LogManager.getLogger(MapRecursiveTask.class);
 
     public MapRecursiveTask(Object[] args) {
         this.urlHome = (String) args[0];
@@ -49,10 +53,12 @@ class MapRecursiveTask extends RecursiveTask<Set<MapRecursiveTask>> {
                 try {
                     statusCode = urlHomeSave(set, root, siteId);
                 } catch (SQLException | IOException e) {
+                    log.error(e);
                     e.printStackTrace();
                     try {
                         ConnectionMySql.saveException(e.getMessage(), siteId);
                     } catch (SQLException ex) {
+                        log.error(e);
                         ex.printStackTrace();
                     }
                 }
@@ -82,15 +88,18 @@ class MapRecursiveTask extends RecursiveTask<Set<MapRecursiveTask>> {
         try {
             urlHomeSave(urlHome, root, siteId);
         } catch (SQLException | IOException e) {
+            log.error(e);
             throw new RuntimeException(e);
         }
         try {
             linkLink = ConnectionMySql.searchUrlSql(createSubtask(urlHome, siteId), siteId);
         } catch (IOException | SQLException e) {
+            log.error(e);
             e.printStackTrace();
             try {
                 ConnectionMySql.saveException(e.getMessage(), siteId);
             } catch (SQLException ex) {
+                log.error(e);
                 ex.printStackTrace();
             }
         }
@@ -116,6 +125,8 @@ class MapRecursiveTask extends RecursiveTask<Set<MapRecursiveTask>> {
                 Object[] args1 = {urlHome1, response.statusCode(), doc, siteId};
                 ConnectionMySql.executeInsert(args1);
                 ConnectionMySql.saveException(response.statusCode() + " " + response.statusMessage(), siteId);
+                log.debug(response.statusCode() + " " + response.statusMessage() + " - "
+                        + root.substring(0, root.length() - 1) + urlHome1);
                 statusCode = response.statusCode();
             } else {
                 String root1 = root;
@@ -128,12 +139,14 @@ class MapRecursiveTask extends RecursiveTask<Set<MapRecursiveTask>> {
                     Object[] args2 = {urlHome1, response.statusCode(), doc, siteId};
                     ConnectionMySql.executeInsert(args2);
                     LuceneMorph.luceneMorphSearch(doc.toString(), urlHome1, siteId);
+                    log.debug("Indexed page: " + root1 + urlHome1);
                 }
                 statusCode = response.statusCode();
             }
         } else {
             Object[] args3 = {urlHome1, 0, doc, siteId};
             ConnectionMySql.executeInsert(args3);
+            log.debug("ResponseJsoup = null " + root.substring(0, root.length() - 1) + urlHome1);
             ConnectionMySql.saveException("responseJsoup = null " + urlHome1, siteId);
             statusCode = 0;
         }
@@ -167,6 +180,7 @@ class MapRecursiveTask extends RecursiveTask<Set<MapRecursiveTask>> {
                 linkList.addAll(documentProcessing(doc));
             }
         } else {
+            log.debug("ResponseJsoup = null " + urlHome2);
             ConnectionMySql.saveException("responseJsoup = null " + urlHome2, siteId);
         }
         return ConnectionMySql.searchUrlSql(linkList, siteId);
@@ -177,13 +191,15 @@ class MapRecursiveTask extends RecursiveTask<Set<MapRecursiveTask>> {
         try {
             try {
                 response = Jsoup.connect(urlNew).userAgent(userAgent)
-                        .timeout(10000).ignoreHttpErrors(true).execute();
+                        .timeout(20000).ignoreHttpErrors(true).execute();
                 return response;
             } catch (ConnectException e) {
+                log.error(e);
                 e.getMessage();
                 ConnectionMySql.saveException(e.getMessage() + " - " + e.getLocalizedMessage(), siteId);
             }
         } catch (IOException | SQLException e) {
+            log.error(e);
             e.getLocalizedMessage();
             ConnectionMySql.saveException(e.getMessage(), siteId);
         }

@@ -2,21 +2,24 @@ package main.modal;
 
 import main.modal.indexing.Indexing;
 import main.modal.indexing.IsIndexingFalse;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Component;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static main.controllers.TaskController.isIndexing;
+import static main.controllers.PagesController.isIndexing;
 
 @Component
 public class CreateThreadsIndexing {
     static List<Thread> list = new ArrayList<>();
     ConnectionMySql connectionMySql;
 
-    public CreateThreadsIndexing() {
+    private static final Logger log = LogManager.getLogger(CreateThreadsIndexing.class);
 
+    public CreateThreadsIndexing() {
     }
 
     public void createThreadsIndexingAll(List<SitesPogo> sites4, String userAgent) {
@@ -29,6 +32,7 @@ public class CreateThreadsIndexing {
             thread.setName(site.getRoot());
             thread.start();
             list.add(thread);
+            log.info("Indexing site: " + site.getRoot());
         }
         Runnable runnable1 = new IsIndexingFalse(list);
         Thread thread1 = new Thread(runnable1);
@@ -43,6 +47,7 @@ public class CreateThreadsIndexing {
                         "Ошибка: выполнение парсинга сайта прервано");
                 t.stop();
             } catch (SQLException e) {
+                log.error(e);
                 throw new RuntimeException(e);
             }
         });

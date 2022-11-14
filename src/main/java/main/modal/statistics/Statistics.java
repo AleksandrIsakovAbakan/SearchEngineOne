@@ -1,10 +1,8 @@
 package main.modal.statistics;
 
-import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 
-@Component
 public class Statistics {
     StatisticsTotal total;
     ArrayList<StatisticsDetailed> detailed;

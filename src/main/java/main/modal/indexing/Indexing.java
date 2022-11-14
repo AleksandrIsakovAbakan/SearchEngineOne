@@ -2,6 +2,8 @@ package main.modal.indexing;
 
 import main.modal.ConnectionMySql;
 import main.modal.SitesPogo;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.sql.SQLException;
 import java.util.HashSet;
@@ -13,6 +15,8 @@ public class Indexing implements Runnable {
     SitesPogo site;
     boolean pageAll;
     public String userAgent;
+
+    private static final Logger log = LogManager.getLogger(Indexing.class);
 
     public Indexing(SitesPogo site, String userAgent, boolean pageAll) {
         this.site = site;
@@ -28,6 +32,7 @@ public class Indexing implements Runnable {
         try {
             siteId = siteIdSave(root, url, pageAll);
         } catch (SQLException e) {
+            log.error(e);
             throw new RuntimeException(e);
         }
         if (!url.substring(url.length() - 1).equals("/")) { url = url + "/";}
@@ -42,6 +47,7 @@ public class Indexing implements Runnable {
                 try {
                     ConnectionMySql.saveStatus("FAILED", root, "Ошибка: выполнение парсинга сайта прервано");
                 } catch (SQLException e) {
+                    log.error(e);
                     throw new RuntimeException(e);
                 }
             }
@@ -58,6 +64,7 @@ public class Indexing implements Runnable {
                 siteId = ConnectionMySql.getSiteIdIndexing(root, url, pageAll);
             }
         } catch (SQLException e) {
+            log.error(e);
             e.printStackTrace();
             ConnectionMySql.saveException(e.getMessage(), siteId);
         }

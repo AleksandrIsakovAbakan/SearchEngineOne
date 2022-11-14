@@ -1,8 +1,5 @@
 package main.modal;
 
-import org.springframework.stereotype.Component;
-
-@Component
 public class SitesPogo {
     String url;
     String name;

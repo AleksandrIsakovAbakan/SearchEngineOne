@@ -9,13 +9,12 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 @Controller
-public class DefaultController {
+public class MainPageController {
     @Autowired
     SitesProperties sitesPropNew;
     @Autowired
     public Datasource datasource;
     Connection connection;
-
 
     @RequestMapping(value = {"{pathToWebInterface}", "/api{pathToWebInterface}"})
     public String index(Model model) throws SQLException {

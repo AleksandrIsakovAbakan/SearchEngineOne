@@ -1,11 +1,7 @@
 package main.modal.statistics;
 
-import org.springframework.stereotype.Component;
-
-import java.sql.Date;
 import java.sql.Timestamp;
 
-@Component
 public class StatisticsDetailed {
     int id;
     String url;

@@ -2,6 +2,8 @@ package main.modal;
 
 import main.modal.statistics.StatisticsDetailed;
 import main.modal.statistics.StatisticsTotal;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jsoup.nodes.Document;
 import org.springframework.stereotype.Service;
 
@@ -11,13 +13,15 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
-import static main.controllers.TaskController.isIndexing;
+import static main.controllers.PagesController.isIndexing;
 
 @Service
 public class ConnectionMySql {
     static float titleSql = 0F;
     static float bodySql = 0F;
     public static Connection connection;
+
+    private static final Logger log = LogManager.getLogger(ConnectionMySql.class);
 
     public ConnectionMySql() {
     }
@@ -103,11 +107,11 @@ public class ConnectionMySql {
                     }
                     insertKeyIndex(pageId, lemmaSql, siteId);
                 } else {
-                    System.out.println("ERROR pageId 0 " + urlStr);
+                    log.error("ERROR pageId 0 " + urlStr);
                 }
             }
         } else {
-            System.out.println("ERROR resultSet null " + urlStr);
+            log.error("ERROR resultSet null " + urlStr);
         }
         resultSet.close();
     }
@@ -273,7 +277,7 @@ public class ConnectionMySql {
         resultSiteIdPage = connection.createStatement().executeQuery(sqlSiteIdPage);
         connection.createStatement().close();
         if (!resultSiteIdPage.next()) {
-            System.out.println("Ошибка: не найден siteId " + site);
+            log.error("Ошибка: не найден siteId " + site);
             siteId = 0;
         } else {
             siteId = resultSiteIdPage.getInt("id");

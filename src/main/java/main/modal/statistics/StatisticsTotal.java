@@ -1,8 +1,6 @@
 package main.modal.statistics;
 
-import org.springframework.stereotype.Component;
 
-@Component
 public class StatisticsTotal {
     int sites;
     int pages;

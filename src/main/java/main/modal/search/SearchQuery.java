@@ -4,6 +4,8 @@ import main.modal.ConnectionMySql;
 import main.modal.Data;
 import main.modal.LuceneMorph;
 import main.modal.Page;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -17,14 +19,25 @@ import static java.util.stream.Collectors.toMap;
 @Service
 public class SearchQuery {
     static ResultSearch resultSearch;
+    private static final Logger log = LogManager.getLogger(SearchQuery.class);
 
-    public ResultSearch searchQueryOffset(int offset, int limit, String query, String site)
-            throws SQLException {
+    public SearchQuery() {
+    }
+
+    public ResultSearch searchQueryOffset(Object[] args5) throws SQLException {
+        int offset = (int) args5[0];
+        int limit = (int) args5[1];
+        String query = (String) args5[2];
+        String site = (String) args5[3];
+        log.info("Получен поисковый запрос: " + query);
         Object[] args1 = {query, site, offset, limit};
         resultSearch = searchQueryNew(args1);
         ResultSearch resultSearch1 = resultSearch;
         ArrayList<Data> searchData1 = new ArrayList<>();
         searchData1.addAll(resultSearch.getData());
+        searchData1.forEach(t -> {
+            log.debug("Найдена страница: " + t.getSiteName() + t.getUri());
+        });
         ArrayList<Data> searchDataOffset = new ArrayList<>();
         searchDataOffset = searchData1;
         resultSearch1.setData(searchDataOffset);
@@ -42,6 +55,7 @@ public class SearchQuery {
         try {
             searchString3 = LuceneMorph.luceneMorphProcessing(query);
         } catch (IOException e) {
+            log.error(e);
             e.printStackTrace();
         }
         if (searchString3 != null) {
@@ -52,7 +66,7 @@ public class SearchQuery {
             resultSearch.setResult("true");
             resultSearch.setCount(searchStringAnswer.size());
             resultSearch.setData(searchData);
-            System.out.println("ответ отправлен " + query);
+            log.info("Ответ отправлен: " + query);
         }
         return resultSearch;
     }
@@ -75,8 +89,10 @@ public class SearchQuery {
                         Object[] args3 = {key, searchStringAnswer.get(key).floatValue(), searchString3, siteId};
                         searchDataNew = responseOutput(args3);
                     } catch (SQLException e) {
+                        log.error(e);
                         e.printStackTrace();
                     } catch (IOException e) {
+                        log.error(e);
                         e.printStackTrace();
                     }
                     searchData.add(searchDataNew);
@@ -191,7 +207,7 @@ public class SearchQuery {
         String responseContent = resultOutputSqlNamePage.getString("content");
         String[] responseContentRus = resultOutputSqlNamePage.getString("content")
                 .replaceAll("[^;а-яёА-Я ]", "").replaceAll("[\\s]{2,}", " ")
-                .replaceAll("[.,-]{2,}", " ").replaceAll(";", " ")
+                .replaceAll(";", " ")
                 .trim().split("\\s+");
         if (siteId == 0) {
             siteId = resultOutputSqlNamePage.getInt("site_id");
@@ -217,7 +233,10 @@ public class SearchQuery {
         HashMap<Integer, String> searchForOccurrencesMin = new HashMap<>();
         HashMap<Integer, String> searchForOccurrencesMax = new HashMap<>();
         String word = "";
-        searchForOccurrences = responseSnippetSearchForOccurrences(wordTest1, searchString3);
+        searchForOccurrences = responseSnippetSearchForOccurrences(wordTest1, searchString3, false);
+        if (searchForOccurrences.size() == 0){
+            searchForOccurrences = responseSnippetSearchForOccurrences(wordTest1, searchString3, true);
+        }
         ArrayList<Integer> search;
         Set<String> key = searchForOccurrences.keySet();
         for (String key1 : key) {
@@ -241,37 +260,53 @@ public class SearchQuery {
     }
 
     public HashMap<String, ArrayList<Integer>> responseSnippetSearchForOccurrences(ArrayList<String> wordTest1,
-                                                                       HashMap<String, Double> searchString3) {
+                                                    HashMap<String, Double> searchString3, boolean flagSearch)
+                                                    throws IOException {
         HashMap<String, ArrayList<Integer>> searchForOccurrences = new HashMap<>();
         Set<String> key = searchString3.keySet();
         for (int i = 0; i < wordTest1.size(); i++) {
             for (String key1 : key) {
-                ArrayList<Integer> occurrences;
-                boolean flag = false;
                 String keyShort = "";
                 if (key1.length() > 4) {
                     keyShort = key1.substring(0, key1.length() - 2);
                 } else {
                     keyShort = key1;
                 }
-                if (wordTest1.get(i).toLowerCase().contains(keyShort)) {
-                    if (searchForOccurrences.containsKey(key1)) {
-                        occurrences = searchForOccurrences.get(key1);
-                        for (int o = 0; o < occurrences.size(); o++) {
-                            if (occurrences.get(o) == i) {
-                                flag = true;
-                            }
-                        }
-                        if (!flag) {
-                            occurrences.add(i);
-                            searchForOccurrences.put(key1, occurrences);
-                        }
-                    } else {
-                        occurrences = new ArrayList<>();
-                        occurrences.add(i);
-                        searchForOccurrences.put(key1, occurrences);
+                Object[] args4 = {wordTest1.get(i), keyShort, searchForOccurrences, i, flagSearch};
+                searchForOccurrences = searchOccurrences(args4);
+            }
+        }
+        return searchForOccurrences;
+    }
+
+    private HashMap<String, ArrayList<Integer>> searchOccurrences(Object[] args4) throws IOException{
+        String word = (String) args4[0];
+        String key1 = (String) args4[1];
+        HashMap<String, ArrayList<Integer>> searchForOccurrences= (HashMap<String, ArrayList<Integer>>) args4[2];
+        int i = (Integer) args4[3];
+        boolean flagSearch = (Boolean) args4[4];
+        ArrayList<Integer> occurrences;
+        boolean flag = false;
+        String wordSearch = word.toLowerCase(Locale.ROOT);
+        if (flagSearch){
+            wordSearch = LuceneMorph.luceneMorphProcessing2(word.toLowerCase(Locale.ROOT));
+        }
+        if (wordSearch.contains(key1)) {
+            if (searchForOccurrences.containsKey(key1)) {
+                occurrences = searchForOccurrences.get(key1);
+                for (int o = 0; o < occurrences.size(); o++) {
+                    if (occurrences.get(o) == i) {
+                        flag = true;
                     }
                 }
+                if (!flag) {
+                    occurrences.add(i);
+                    searchForOccurrences.put(key1, occurrences);
+                }
+            } else {
+                occurrences = new ArrayList<>();
+                occurrences.add(i);
+                searchForOccurrences.put(key1, occurrences);
             }
         }
         return searchForOccurrences;
