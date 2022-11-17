@@ -218,7 +218,11 @@ public class SearchQuery {
         resultOutputSqlNamePage.close();
         ResultSet resultOutputSqlSiteName = ConnectionMySql.searchOutputSqlSiteName(siteId);
         if (resultOutputSqlSiteName.next()) {
-            searchData1.setSite(resultOutputSqlSiteName.getString("url"));
+            String url1 = resultOutputSqlSiteName.getString("url");
+            if (url1.substring(url1.length() - 1).equals("/")){
+                url1 = url1.substring(0, url1.length() - 1);
+            }
+            searchData1.setSite(url1);
             searchData1.setSiteName(resultOutputSqlSiteName.getString("name"));
         }
         resultOutputSqlSiteName.close();
