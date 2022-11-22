@@ -190,6 +190,7 @@ class MapRecursiveTask extends RecursiveTask<Set<MapRecursiveTask>> {
         Connection.Response response = null;
         try {
             try {
+                wait(100);
                 response = Jsoup.connect(urlNew).userAgent(userAgent)
                         .timeout(20000).ignoreHttpErrors(true).execute();
                 return response;
@@ -197,6 +198,9 @@ class MapRecursiveTask extends RecursiveTask<Set<MapRecursiveTask>> {
                 log.error(e);
                 e.getMessage();
                 ConnectionMySql.saveException(e.getMessage() + " - " + e.getLocalizedMessage(), siteId);
+            } catch (InterruptedException e) {
+                log.error(e);
+                throw new RuntimeException(e);
             }
         } catch (IOException | SQLException e) {
             log.error(e);
